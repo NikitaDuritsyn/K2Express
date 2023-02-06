@@ -3,11 +3,10 @@ import { pool } from '../db.js'
 export class clientController {
     async createClient(req, res) {
         try {
-            // чтобы клиенты по id брони записывались
-            // const bookingId = req.params.id .... http://localhost:8080/api/create_clients/:id
-            const { name, last_name } = req.body
-            const recordClient = await pool.query(`INSERT INTO clients (name, lastname) values ($1, $2) RETURNING *`, [name, last_name])
-            res.json(recordClient.rows) //recordClient.rows[0] то не будет в массив обернут а просто будет объект выдавать
+            const bookingId = req.params.id
+            const { name, last_name, number_phone } = req.body
+            const client = await pool.query(`INSERT INTO clients (booking_id, name, lastname,number_phone) values ($1, $2, $3, $4) RETURNING *`, [bookingId, name, last_name, number_phone])
+            res.json(client.rows[0])
         } catch (e) {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);
         }

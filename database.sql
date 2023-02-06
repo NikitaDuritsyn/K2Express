@@ -1,119 +1,82 @@
 -- DataBase kamenka2
-create TABLE clients(
+create TABLE users(
     id SERIAL PRIMARY KEY,
     name text NOT NULL,
-    lastname text NOT NULL
-);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    -- DataBaseTodoAPP
-create TABLE person(
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL,
-    lastname VARCHAR(50) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
+    lastname text NOT NULL,
+    email text NOT NULL UNIQUE,
     password text NOT NULL,
-    salt text,
-    phone VARCHAR(20) NOT NULL,
-    token text,
-    role VARCHAR(50) DEFAULT 'user'
-);
-create TABLE tasks(
-    id SERIAL PRIMARY KEY,
-    user_id INT references person(id),
-    title text,
-    description text,
-    status BOOLEAN,
-    imporatant_index INT
-);
-
-
-    -- UNIQUE - свойство которое делает поле уникальным во всем столбце таблицы
-    -- Email CHARACTER VARYING(30) UNIQUE, как пример. Нужно сделать с мыслом
-create TABLE person(
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL,
-    lastname VARCHAR(50) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password text NOT NULL,
-    salt text,
-    phone VARCHAR(20) NOT NULL,
-    token text,
-    role VARCHAR(50) DEFAULT 'user'
-);
-create TABLE orders(
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(255) DEFAULT 'NULL',
-    description text DEFAULT 'NULL',
-    username VARCHAR(50) NOT NULL,
-    patronymic VARCHAR(50),
-    userlastname VARCHAR(50),
-    email VARCHAR(255),
     phone VARCHAR(20) NOT NULL
 );
-create TABLE person(
+
+create TABLE clients(
     id SERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL,
-    lastname VARCHAR(50) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    password text NOT NULL,
-    salt text,
-    phone VARCHAR(20) NOT NULL,
-    token text,
-    role VARCHAR(50) NOT NULL
-);
--- // //////////////// // --
-create TABLE products(
-    id SERIAL PRIMARY KEY,
-    type VARCHAR(255) DEFAULT 'NULL',
-    title VARCHAR(255) DEFAULT 'Преимущества',
-    titleTwo VARCHAR(255) DEFAULT 'NULL',
-    descriptionMaterial text DEFAULT 'NULL',
-    descriptionAdvantages text DEFAULT 'NULL',
-    price VARCHAR(50) DEFAULT 'NULL',
-    urlImage text DEFAULT 'NULL'
-);
-create TABLE reviews(
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) DEFAULT 'NULL',
-    lastname VARCHAR(255) DEFAULT 'NULL',
-    date VARCHAR(255) DEFAULT 'NULL',
-    description text DEFAULT 'NULL',
-    grade NUMERIC
-);
--- ОТЫЗЫВЫ ФАЛЬШИВКИ НУЖНО СДЕЛАТЬ ОБНОВЛЕНИЕ ДАТЫ НА НИХ ПО ТАЙМЕРУ
-create TABLE reviewsStatic(
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) DEFAULT 'NULL',
-    lastname VARCHAR(255) DEFAULT 'NULL',
-    date VARCHAR(255) DEFAULT 'NULL',
-    description text DEFAULT 'NULL', -- Сделать ограничение на 300 символов
-    grade NUMERIC
+    session_id INTEGER,
+    FOREIGN KEY (session_id) REFERENCES session (id),
+    name text NOT NULL,
+    lastname text NOT NULL,
+    tariff text NOT NULL,
+    number_phone text
 );
 
-    -- FOREIGN KEY (user_id) REFERENCES person (id)
-    -- user_id INTEGER,
-    -- sql lenguage Russian кодировка - \! chcp 1251
+create TABLE session(
+    id SERIAL PRIMARY KEY,
+    date text NOT NULL,
+    time text NOT NULL,
+    timeLine text NOT NULL,
+    room text NOT NULL,
+    start_time text NOT NULL,
+    end_time text NOT NULL,
+    deposit NUMERIC,
+    status text NOT NULL
+);
+
+create TABLE services(
+    id SERIAL PRIMARY KEY,
+    client_id INTEGER,
+    FOREIGN KEY (client_id) REFERENCES clients (id),
+    name text NOT NULL,
+    price NUMERIC NOT NULL
+);
+
+create TABLE tariffs(
+    id SERIAL PRIMARY KEY,
+    name text NOT NULL
+);
+
+create TABLE payments(
+    id SERIAL PRIMARY KEY,
+    session_id INTEGER,
+    FOREIGN KEY (session_id) REFERENCES session (id),
+    session_id INTEGER,
+    FOREIGN KEY (session_id) REFERENCES session (id),
+    payment INTEGER NOT NULL,
+);
+
+create TABLE clients_timeline(
+    id SERIAL PRIMARY KEY,
+    session_id INTEGER,
+    FOREIGN KEY (session_id) REFERENCES session (id),
+    client_id INTEGER,
+    FOREIGN KEY (client_id) REFERENCES clients (id),
+    payment INTEGER NOT NULL,
+);
+
+-- ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+-- |||||||||||||||||||||||||||||||||||||||||||||||||||||||      ВОПРОСЫ     |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+-- |||||||||||||||||||||||||||||||||||||||||||||||||||||||      ВОПРОСЫ     |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+-- |||||||||||||||||||||||||||||||||||||||||||||||||||||||      ВОПРОСЫ     |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+-- |||||||||||||||||||||||||||||||||||||||||||||||||||||||      ВОПРОСЫ     |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+-- ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+-- Где дожны храниться Payments и тарифы с услугами. Потому что пока мне не особо понятно как это правильно реализовать. Я так понял относится эта сущьность к Session (или сделать 2 payment сущности одна относиться к Session, а вторая к клиенту)
+-- Может ли тариф быть разным у каждого пользователя? (скорее всего нет) Если да, то нужна помощь чтобы понять как распределить данные о них в бд и логику на фронте (кажется что так проще но хз)
+-- ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+-- |||||||||||||||||||||||||||||||||||||||||||||||||||||||      НАПОМИН     |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+-- |||||||||||||||||||||||||||||||||||||||||||||||||||||||      НАПОМИН     |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+-- |||||||||||||||||||||||||||||||||||||||||||||||||||||||      НАПОМИН     |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+-- |||||||||||||||||||||||||||||||||||||||||||||||||||||||      НАПОМИН     |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+-- ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+-- UNIQUE - свойство которое делает поле уникальным во всем столбце таблицы
+-- Email CHARACTER VARYING(30) UNIQUE, как пример. Нужно сделать с мыслом
+-- FOREIGN KEY (user_id) REFERENCES person (id)
+-- user_id INTEGER,
+-- sql lenguage Russian кодировка - \! chcp 1251
