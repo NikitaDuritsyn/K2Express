@@ -17,6 +17,7 @@
 -- FOREIGN KEY (user_id) REFERENCES person (id)
 -- user_id INTEGER,
 -- sql lenguage Russian кодировка - \! chcp 1251
+-- отчистить экран -  \! cls
 -- DataBase kamenka2
 create TABLE users(
     id SERIAL PRIMARY KEY,
@@ -24,39 +25,13 @@ create TABLE users(
     lastname text NOT NULL,
     email text NOT NULL UNIQUE,
     password text NOT NULL,
-    phone VARCHAR(20) NOT NULL
+    phone VARCHAR(20) NOT NULL,
+    status text NOT NULL
 );
 
-create TABLE clients(
+create TABLE rooms(
     id SERIAL PRIMARY KEY,
-    session_id INTEGER,
-    FOREIGN KEY (session_id) REFERENCES session (id),
-    name text NOT NULL,
-    lastname text NOT NULL,
-    tariff_id INTEGER NOT NULL,
-    number_phone text,
-    deposit INTEGER,
-    deponent INTEGER,
-    status INTEGER NOT NULL,
-);
-
-create TABLE session(
-    id SERIAL PRIMARY KEY,
-    date text NOT NULL,
-    time text NOT NULL,
-    timeLine text NOT NULL,
-    room text NOT NULL,
-    start_time text NOT NULL,
-    end_time text NOT NULL,
-    status INTEGER NOT NULL,
-);
-
-create TABLE services(
-    id SERIAL PRIMARY KEY,
-    client_id INTEGER,
-    FOREIGN KEY (client_id) REFERENCES clients (id),
-    name text NOT NULL,
-    price NUMERIC NOT NULL
+    name text NOT NULL
 );
 
 create TABLE tariffs(
@@ -64,10 +39,42 @@ create TABLE tariffs(
     name text NOT NULL
 );
 
+create TABLE services(
+    id SERIAL PRIMARY KEY,
+    name text NOT NULL,
+    price NUMERIC NOT NULL
+);
+
+create TABLE sessions(
+    id SERIAL PRIMARY KEY,
+    room_id INTEGER,
+    FOREIGN KEY (room_id) REFERENCES rooms (id),
+    date text NOT NULL,
+    time_booking text NOT NULL,
+    timeLine text NOT NULL,
+    start_time text NOT NULL,
+    end_time text NOT NULL,
+    status INTEGER NOT NULL
+);
+
+create TABLE clients(
+    id SERIAL PRIMARY KEY,
+    session_id INTEGER,
+    FOREIGN KEY (session_id) REFERENCES sessions (id),
+    tariff_id INTEGER,
+    FOREIGN KEY (tariff_id) REFERENCES tariffs (id),
+    name text NOT NULL,
+    lastname text NOT NULL,
+    number_phone text,
+    deposit INTEGER,
+    deponent INTEGER,
+    status INTEGER NOT NULL
+);
+
 create TABLE payments(
     id SERIAL PRIMARY KEY,
     session_id INTEGER,
-    FOREIGN KEY (session_id) REFERENCES session (id),
+    FOREIGN KEY (session_id) REFERENCES sessions (id),
     client_id INTEGER,
     FOREIGN KEY (client_id) REFERENCES clients (id),
     payment INTEGER NOT NULL
@@ -76,8 +83,17 @@ create TABLE payments(
 create TABLE clients_timeline(
     id SERIAL PRIMARY KEY,
     session_id INTEGER,
-    FOREIGN KEY (session_id) REFERENCES session (id),
+    FOREIGN KEY (session_id) REFERENCES sessions (id),
     client_id INTEGER,
     FOREIGN KEY (client_id) REFERENCES clients (id),
-    payment INTEGER NOT NULL
+    time_line INTEGER NOT NULL,
+    start_time text NOT NULL,
+    end_time text NOT NULL
+);
+
+create TABLE client_services(
+    client_id INTEGER,
+    FOREIGN KEY (client_id) REFERENCES clients (id),
+    service_id INTEGER,
+    FOREIGN KEY (service_id) REFERENCES services (id)
 );
