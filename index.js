@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv'
 import express from "express";
 import cors from "cors"
 import * as clientRouter from './routes/clientRoutes.js'
-import * as bookingRouter from './routes/bookingRouter.js'
+import * as sessionsRouter from './routes/sessionsRouter.js'
 
 
 dotenv.config()
@@ -15,10 +15,10 @@ app.use(express.urlencoded({ extended: true }))
 app.use(cors())
 
 const clientR = clientRouter.router
-const bookingR = bookingRouter.router
+const sessionsR = sessionsRouter.router
 
 app.use('/api', clientR)
-app.use('/api', bookingR)
+app.use('/api', sessionsR)
 
 
 const start = async () => {
