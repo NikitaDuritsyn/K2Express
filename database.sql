@@ -18,6 +18,8 @@
 -- user_id INTEGER,
 -- sql lenguage Russian кодировка - \! chcp 1251
 -- отчистить экран -  \! cls
+-- DROP TABLE client_services,clients,clients_timelines,payments,rooms,services,sessions,tariffs,users;
+DROP TABLE users, rooms, tariffs, services, sessions, visitors, payments, payment_types, visitors_timelines, visitors_services;
 -- DataBase kamenka2
 create TABLE users(
     id SERIAL PRIMARY KEY,
@@ -26,6 +28,7 @@ create TABLE users(
     email text NOT NULL UNIQUE,
     password text NOT NULL,
     phone VARCHAR(20) NOT NULL,
+    token text,
     status text NOT NULL
 );
 
@@ -45,6 +48,11 @@ create TABLE services(
     price NUMERIC NOT NULL
 );
 
+create TABLE payment_types(
+    id SERIAL PRIMARY KEY,
+    type_name text NOT NULL
+);
+
 create TABLE sessions(
     id SERIAL PRIMARY KEY,
     room_id INTEGER,
@@ -57,7 +65,7 @@ create TABLE sessions(
     status INTEGER NOT NULL
 );
 
-create TABLE clients(
+create TABLE visitors(
     id SERIAL PRIMARY KEY,
     session_id INTEGER,
     FOREIGN KEY (session_id) REFERENCES sessions (id),
@@ -75,25 +83,27 @@ create TABLE payments(
     id SERIAL PRIMARY KEY,
     session_id INTEGER,
     FOREIGN KEY (session_id) REFERENCES sessions (id),
-    client_id INTEGER,
-    FOREIGN KEY (client_id) REFERENCES clients (id),
+    visitor_id INTEGER,
+    FOREIGN KEY (visitor_id) REFERENCES visitors (id),
+    payment_types_id INTEGER,
+    FOREIGN KEY (payment_types_id) REFERENCES payment_types (id),
     payment INTEGER NOT NULL
 );
 
-create TABLE clients_timeline(
+create TABLE visitors_timelines(
     id SERIAL PRIMARY KEY,
     session_id INTEGER,
     FOREIGN KEY (session_id) REFERENCES sessions (id),
-    client_id INTEGER,
-    FOREIGN KEY (client_id) REFERENCES clients (id),
+    visitor_id INTEGER,
+    FOREIGN KEY (visitor_id) REFERENCES visitors (id),
     time_line INTEGER NOT NULL,
     start_time text NOT NULL,
     end_time text NOT NULL
 );
 
-create TABLE client_services(
-    client_id INTEGER,
-    FOREIGN KEY (client_id) REFERENCES clients (id),
+create TABLE visitors_services(
+    visitor_id INTEGER,
+    FOREIGN KEY (visitor_id) REFERENCES visitors (id),
     service_id INTEGER,
     FOREIGN KEY (service_id) REFERENCES services (id)
 );
