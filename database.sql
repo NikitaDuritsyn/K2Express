@@ -57,7 +57,7 @@ create TABLE sessions(
     id SERIAL PRIMARY KEY,
     room_id INTEGER,
     FOREIGN KEY (room_id) REFERENCES rooms (id),
-    date text NOT NULL,
+    date DATE NOT NULL,
     time_booking text NOT NULL,
     timeLine text NOT NULL,
     start_time text NOT NULL,

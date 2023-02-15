@@ -20,8 +20,8 @@ export class roomsController {
     }
     async deleteRoom(req, res) {
         try {
-            const roomID = req.params.id
-            const room = await pool.query(`DELETE FROM rooms where id = $1`, [roomID])
+            const roomId = req.params.id
+            const room = await pool.query(`DELETE FROM rooms where id = $1`, [roomId])
             res.json(room.rows[0])
         } catch (e) {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);
