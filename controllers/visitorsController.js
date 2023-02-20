@@ -6,8 +6,8 @@ export class visitorsController {
             // НУЖНО УТОЧНИТЬ МОМЕНТ КСТАТИ МОЖЕТ ЛИ ВООБЩЕ ТАКОЕ БЫТЬ ЧТО ДЕПОНЕНТ НЕ ВНЕСЛИ ПРИ БРОНИ
             // Тут еще может быть депонент в Payment, при условии что он есть
             const sessionId = req.params.id
-            const { tariff_id, name, last_name, number_phone, deposit, deponent, status } = req.body
-            const visitor = await pool.query(`INSERT INTO visitors (session_id, tariff_id, name, lastname, number_phone, deposit, deponent, status) values ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`, [sessionId, tariff_id, name, last_name, number_phone, deposit, deponent, status])
+            const { tariffId, name, lastname, numberPhone, deposit, deponent, status } = req.body
+            const visitor = await pool.query(`INSERT INTO visitors (session_id, tariff_id, name, lastname, number_phone, deposit, deponent, status) values ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`, [sessionId, tariffId, name, lastname, numberPhone, deposit, deponent, status])
             res.json(visitor.rows[0])
         } catch (e) {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);

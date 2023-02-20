@@ -4,7 +4,7 @@ export class roomsController {
     async getRooms(req, res) {
         try {
             const rooms = await pool.query(`SELECT * FROM rooms`)
-            res.json(rooms.rows)
+                res.json(rooms.rows)
         } catch (e) {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);
         }
