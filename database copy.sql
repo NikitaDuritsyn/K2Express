@@ -18,17 +18,7 @@
 -- user_id INTEGER,
 -- sql lenguage Russian кодировка - \! chcp 1251
 -- отчистить экран -  \! cls
--- DROP TABLE client_services,clients,clients_timelines,payments,rooms,services,sessions,tariffs,users;
-DROP TABLE users,
-rooms,
-tariffs,
-services,
-sessions,
-visitors,
-payments,
-payment_types,
-visitors_timelines,
-visitors_services;
+DROP TABLE rooms, services, tariffs, payment_types, sessions, visitors, clients, deposits, deponents, visitors_sessions_durations, visitors_services;
 
 -- DataBase kamenka2
 create TABLE users(
@@ -44,77 +34,87 @@ create TABLE users(
 
 create TABLE rooms(
     id SERIAL PRIMARY KEY,
-    name text NOT NULL,
+    title text NOT NULL,
     color text
-);
-
-create TABLE tariffs(
-    id SERIAL PRIMARY KEY,
-    name text NOT NULL
 );
 
 create TABLE services(
     id SERIAL PRIMARY KEY,
-    name text NOT NULL,
+    title text NOT NULL,
     price NUMERIC NOT NULL
+);
+
+create TABLE tariffs(
+    id SERIAL PRIMARY KEY,
+    title text NOT NULL
 );
 
 create TABLE payment_types(
     id SERIAL PRIMARY KEY,
-    type_name text NOT NULL
+    type text NOT NULL
 );
 
 create TABLE sessions(
     id SERIAL PRIMARY KEY,
-    room_id INTEGER,
+    room_id INTEGER NOT NULL,
     FOREIGN KEY (room_id) REFERENCES rooms (id),
-    booked_date DATETIMEOFFSET NOT NULL,
+    booked_date timestamp with time zone NOT NULL,
     estimate_session_duration INTEGER NOT NULL,
-    start_time DATETIMEOFFSET NOT NULL,
-    end_time DATETIMEOFFSET NOT NULL,
-    estimate_visitors_num INTEGER NOT NULL,
+    estimate_visitors_num INTEGER,
+    start_time_session timestamp with time zone,
+    end_time_session timestamp with time zone,
     status text NOT NULL
+);
+
+create TABLE visitors_sessions_durations(
+    id SERIAL PRIMARY KEY,
+    session_id INTEGER NOT NULL,
+    FOREIGN KEY (session_id) REFERENCES sessions (id),
+    visitor_session_duration FLOAT,
+    start_time_visitor timestamp with time zone,
+    end_time_visitor timestamp with time zone
+);
+
+create TABLE clients(
+    id SERIAL PRIMARY KEY,
+    lastname text,
+    number_phone text NOT NULL,
+    status text
 );
 
 create TABLE visitors(
     id SERIAL PRIMARY KEY,
-    session_id INTEGER,
-    FOREIGN KEY (session_id) REFERENCES sessions (id),
-    tariff_id INTEGER,
+    visitor_session_duration_id INTEGER NOT NULL,
+    FOREIGN KEY (visitor_session_duration_id) REFERENCES visitors_sessions_durations (id),
+    tariff_id INTEGER NOT NULL,
     FOREIGN KEY (tariff_id) REFERENCES tariffs (id),
+    client_id INTEGER,
+    FOREIGN KEY (client_id) REFERENCES clients (id),
     name text NOT NULL,
-    lastname text NOT NULL,
-    number_phone text,
-    deposit INTEGER,
-    deponent INTEGER,
-    status INTEGER NOT NULL
+    status text NOT NULL
 );
 
-create TABLE payments(
+create TABLE deposits(
     id SERIAL PRIMARY KEY,
-    session_id INTEGER,
-    FOREIGN KEY (session_id) REFERENCES sessions (id),
-    visitor_id INTEGER,
+    visitor_id INTEGER NOT NULL,
     FOREIGN KEY (visitor_id) REFERENCES visitors (id),
-    payment_types_id INTEGER,
-    FOREIGN KEY (payment_types_id) REFERENCES payment_types (id),
-    payment INTEGER NOT NULL
+    paymet_tipe_id INTEGER NOT NULL,
+    FOREIGN KEY (paymet_tipe_id) REFERENCES payment_types (id),
+    deposits FLOAT NOT NULL
 );
 
-create TABLE visitors_timelines(
+create TABLE deponents(
     id SERIAL PRIMARY KEY,
-    session_id INTEGER,
-    FOREIGN KEY (session_id) REFERENCES sessions (id),
-    visitor_id INTEGER,
+    visitor_id INTEGER NOT NULL,
     FOREIGN KEY (visitor_id) REFERENCES visitors (id),
-    visit_duration INTEGER NOT NULL,
-    start_time DATETIMEOFFSET NOT NULL,
-    end_time DATETIMEOFFSET NOT NULL
+    deponent FLOAT NOT NULL
 );
 
 create TABLE visitors_services(
-    visitor_id INTEGER,
+    id SERIAL PRIMARY KEY,
+    visitor_id INTEGER NOT NULL,
     FOREIGN KEY (visitor_id) REFERENCES visitors (id),
-    service_id INTEGER,
-    FOREIGN KEY (service_id) REFERENCES services (id)
+    service_id INTEGER NOT NULL,
+    FOREIGN KEY (service_id) REFERENCES services (id),
+    status text
 );

@@ -5,3 +5,4 @@ const controller = new servicesController
 
 router.get('/get_services', controller.getAllServices)
 router.post('/create_service', controller.createService)
+router.delete('/delete_service/:id', controller.deleteService)
