@@ -19,7 +19,17 @@
 -- sql lenguage Russian кодировка - \! chcp 1251
 -- отчистить экран -  \! cls
 -- DROP TABLE client_services,clients,clients_timelines,payments,rooms,services,sessions,tariffs,users;
-DROP TABLE users, rooms, tariffs, services, sessions, visitors, payments, payment_types, visitors_timelines, visitors_services;
+DROP TABLE users,
+rooms,
+tariffs,
+services,
+sessions,
+visitors,
+payments,
+payment_types,
+visitors_timelines,
+visitors_services;
+
 -- DataBase kamenka2
 create TABLE users(
     id SERIAL PRIMARY KEY,
@@ -34,7 +44,8 @@ create TABLE users(
 
 create TABLE rooms(
     id SERIAL PRIMARY KEY,
-    name text NOT NULL
+    name text NOT NULL,
+    color text
 );
 
 create TABLE tariffs(
@@ -57,12 +68,12 @@ create TABLE sessions(
     id SERIAL PRIMARY KEY,
     room_id INTEGER,
     FOREIGN KEY (room_id) REFERENCES rooms (id),
-    date DATE NOT NULL,
-    time_booking text NOT NULL,
-    timeLine text NOT NULL,
-    start_time text NOT NULL,
-    end_time text NOT NULL,
-    status INTEGER NOT NULL
+    booked_date DATETIMEOFFSET NOT NULL,
+    estimate_session_duration INTEGER NOT NULL,
+    start_time DATETIMEOFFSET NOT NULL,
+    end_time DATETIMEOFFSET NOT NULL,
+    estimate_visitors_num INTEGER NOT NULL,
+    status text NOT NULL
 );
 
 create TABLE visitors(
@@ -96,9 +107,9 @@ create TABLE visitors_timelines(
     FOREIGN KEY (session_id) REFERENCES sessions (id),
     visitor_id INTEGER,
     FOREIGN KEY (visitor_id) REFERENCES visitors (id),
-    time_line INTEGER NOT NULL,
-    start_time text NOT NULL,
-    end_time text NOT NULL
+    visit_duration INTEGER NOT NULL,
+    start_time DATETIMEOFFSET NOT NULL,
+    end_time DATETIMEOFFSET NOT NULL
 );
 
 create TABLE visitors_services(
