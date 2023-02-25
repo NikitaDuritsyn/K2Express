@@ -18,7 +18,7 @@
 -- user_id INTEGER,
 -- sql lenguage Russian кодировка - \! chcp 1251
 -- отчистить экран -  \! cls
--- DROP TABLE rooms, services, tariffs, payment_types, sessions, visitors, clients, deposits, deponents, sessions_rooms, visitors_services, users;
+DROP TABLE rooms, services, tariffs, payment_types, sessions, visitors, clients, deposits, deponents, sessions_rooms, visitors_services, users;
 -- DataBase kamenka2
 create TABLE users(
     id SERIAL PRIMARY KEY,

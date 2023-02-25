@@ -57,6 +57,11 @@ export class sessionsController {
                 }
             }
 
+            for (let i = 0; i < req.body.rooms.length; i++) {
+                // Вносим в бд комнаты сессии по id сессиии
+                await pool.query(`INSERT INTO sessions_rooms ( room_id, session_id ) values ($1, $2) RETURNING *`, [req.body.rooms[i].id, session.rows[0].id])
+            }
+
             async function setDeposit(client, visitor, deposit) {
                 // Создаем депозит по клиенту
                 const insert_deposit = await pool.query(`INSERT INTO deposits (visitor_id, paymet_type_id, client_id, value) values ($1, $2, $3, $4) RETURNING *`, [visitor.id, deposit.paymet_type_id, client.id, deposit.value])
@@ -87,11 +92,6 @@ export class sessionsController {
     async getAllSessions(req, res) {
         try {
             let sessions = await pool.query(`SELECT * FROM sessions`)
-            // for (let i = 0; i < sessions.rows.length; i++) {
-            // брать пользователей по visitors_sessions_durations
-            //     const visitors = await pool.query(`SELECT * FROM visitors where session_id = $1`, [sessions.rows[i].id])
-            //     sessions.rows[i].visitors = visitors.rows
-            // }
             res.json(sessions.rows)
         } catch (e) {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);
@@ -107,21 +107,25 @@ export class sessionsController {
             futureDate.setUTCHours(0, 0, 0, 0)
             lastDate = lastDate.setDate(lastDate.getDate() - 2)
             futureDate = futureDate.setDate(futureDate.getDate() + Number(days) - 2)
+
+            // Находим сессии в данном деапозоне дат
             let sessions = await pool.query(`SELECT * FROM sessions WHERE booked_date BETWEEN '${new Date(lastDate).toISOString().split('T')[0]}' AND '${new Date(futureDate).toISOString().split('T')[0]}'`)
 
             for (let i = 0; i < sessions.rows.length; i++) {
-                // Сначала берем сущность visitors_sessions_durations
-                const visitors_sessions_durations = await pool.query(`SELECT * FROM visitors_sessions_durations where session_id = $1`, [sessions.rows[i].id])
-                // После находим постителя по visitors_sessions_durations_id
-                const visitors = await pool.query(`SELECT * FROM visitors where visitor_session_duration_id = $1`, [visitors_sessions_durations.rows[0].id])
+
+                // Ищем пользователей по id сессии
+                const visitors = await pool.query(`SELECT * FROM visitors where session_id = $1`, [sessions.rows[i].id])
+                const session_rooms = await pool.query(`SELECT * FROM sessions_rooms where session_id = $1`, [sessions.rows[i].id])
 
                 // const timeBooking = Number(sessions.rows[i].time_booking.slice(0, 2)) * 60 + Number(sessions.rows[i].time_booking.slice(-2))
-
                 const timeBooking = new Date(sessions.rows[i].date).getHours() * 60 + new Date(sessions.rows[i].date).getMinutes()
+
                 sessions.rows[i].time_booking = timeBooking
                 sessions.rows[i].visitors = visitors.rows
+                sessions.rows[i].session_rooms = session_rooms.rows
             }
 
+            // Добавляем поле index_day в соответствии с датой бронирования
             for (let i = -2; i < days - 2; i++) {
                 let date = new Date()
                 date.setUTCHours(0, 0, 0, 0)
