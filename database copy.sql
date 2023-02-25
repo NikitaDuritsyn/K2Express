@@ -18,8 +18,7 @@
 -- user_id INTEGER,
 -- sql lenguage Russian кодировка - \! chcp 1251
 -- отчистить экран -  \! cls
-DROP TABLE rooms, services, tariffs, payment_types, sessions, visitors, clients, deposits, deponents, visitors_sessions_durations, visitors_services;
-
+-- DROP TABLE rooms, services, tariffs, payment_types, sessions, visitors, clients, deposits, deponents, sessions_rooms, visitors_services, users;
 -- DataBase kamenka2
 create TABLE users(
     id SERIAL PRIMARY KEY,
@@ -46,7 +45,10 @@ create TABLE services(
 
 create TABLE tariffs(
     id SERIAL PRIMARY KEY,
-    title text NOT NULL
+    title text NOT NULL,
+    metric text NOT NULL,
+    duration INTEGER,
+    cost INTEGER NOT NULL
 );
 
 create TABLE payment_types(
@@ -56,8 +58,6 @@ create TABLE payment_types(
 
 create TABLE sessions(
     id SERIAL PRIMARY KEY,
-    room_id INTEGER NOT NULL,
-    FOREIGN KEY (room_id) REFERENCES rooms (id),
     booked_date timestamp with time zone NOT NULL,
     estimate_session_duration INTEGER NOT NULL,
     estimate_visitors_num INTEGER,
@@ -66,17 +66,9 @@ create TABLE sessions(
     status text NOT NULL
 );
 
-create TABLE visitors_sessions_durations(
-    id SERIAL PRIMARY KEY,
-    session_id INTEGER NOT NULL,
-    FOREIGN KEY (session_id) REFERENCES sessions (id),
-    visitor_session_duration FLOAT,
-    start_time_visitor timestamp with time zone,
-    end_time_visitor timestamp with time zone
-);
-
 create TABLE clients(
     id SERIAL PRIMARY KEY,
+    name text NOT NULL,
     lastname text,
     number_phone text NOT NULL,
     status text
@@ -84,12 +76,14 @@ create TABLE clients(
 
 create TABLE visitors(
     id SERIAL PRIMARY KEY,
-    visitor_session_duration_id INTEGER NOT NULL,
-    FOREIGN KEY (visitor_session_duration_id) REFERENCES visitors_sessions_durations (id),
+    session_id INTEGER NOT NULL,
+    FOREIGN KEY (session_id) REFERENCES sessions (id),
     tariff_id INTEGER NOT NULL,
     FOREIGN KEY (tariff_id) REFERENCES tariffs (id),
     client_id INTEGER,
     FOREIGN KEY (client_id) REFERENCES clients (id),
+    start_time_visitor timestamp with time zone,
+    end_time_visitor timestamp with time zone,
     name text NOT NULL,
     status text NOT NULL
 );
@@ -98,16 +92,21 @@ create TABLE deposits(
     id SERIAL PRIMARY KEY,
     visitor_id INTEGER NOT NULL,
     FOREIGN KEY (visitor_id) REFERENCES visitors (id),
-    paymet_tipe_id INTEGER NOT NULL,
-    FOREIGN KEY (paymet_tipe_id) REFERENCES payment_types (id),
-    deposits FLOAT NOT NULL
+    paymet_type_id INTEGER NOT NULL,
+    FOREIGN KEY (paymet_type_id) REFERENCES payment_types (id),
+    client_id INTEGER NOT NULL,
+    FOREIGN KEY (client_id) REFERENCES clients (id),
+    value FLOAT NOT NULL
 );
 
 create TABLE deponents(
     id SERIAL PRIMARY KEY,
     visitor_id INTEGER NOT NULL,
     FOREIGN KEY (visitor_id) REFERENCES visitors (id),
-    deponent FLOAT NOT NULL
+    client_id INTEGER NOT NULL,
+    FOREIGN KEY (client_id) REFERENCES clients (id),
+    value FLOAT NOT NULL,
+    status text NOT NULL
 );
 
 create TABLE visitors_services(
@@ -115,6 +114,13 @@ create TABLE visitors_services(
     visitor_id INTEGER NOT NULL,
     FOREIGN KEY (visitor_id) REFERENCES visitors (id),
     service_id INTEGER NOT NULL,
-    FOREIGN KEY (service_id) REFERENCES services (id),
-    status text
+    FOREIGN KEY (service_id) REFERENCES services (id)
+);
+
+create TABLE sessions_rooms(
+    id SERIAL PRIMARY KEY,
+    room_id INTEGER NOT NULL,
+    FOREIGN KEY (room_id) REFERENCES rooms (id),
+    session_id INTEGER NOT NULL,
+    FOREIGN KEY (session_id) REFERENCES sessions (id)
 );

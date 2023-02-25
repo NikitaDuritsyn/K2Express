@@ -34,7 +34,8 @@ export class visitorsController {
     async getAllVisitorsSession(req, res) {
         try {
             const sessionId = req.params.id
-            const visitors = await pool.query(`SELECT * FROM visitors where session_id = $1`, [sessionId])
+            const visitors_sessions_durations = await pool.query(`SELECT * FROM visitors_sessions_durations where session_id = $1`, [sessionId])
+            const visitors = await pool.query(`SELECT * FROM visitors where visitor_session_duration_id = $1`, [visitors_sessions_durations.rows[0].id])
             res.json(visitors.rows)
         } catch (e) {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);

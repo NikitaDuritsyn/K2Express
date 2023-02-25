@@ -3,8 +3,9 @@ import { pool } from '../db.js'
 export class tariffsController {
     async createTariff(req, res) {
         try {
-            const { title } = req.body
-            const tariff = await pool.query(`INSERT INTO tariffs ( title ) values ( $1 ) RETURNING *`, [title])
+            const { title, metric, duration, cost } = req.body
+            
+            const tariff = await pool.query(`INSERT INTO tariffs ( title, metric, duration, cost ) values ( $1, $2, $3, $4 ) RETURNING *`, [title, metric, duration, cost])
             res.json(tariff.rows[0])
         } catch (e) {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);

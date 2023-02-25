@@ -3,24 +3,74 @@ import { pool } from '../db.js'
 export class sessionsController {
     async createSession(req, res) {
         try {
+            //Получаем данные сесии из запроса
+            const { booked_date, estimate_session_duration, estimate_visitors_num, status } = req.body
 
-            const { room_id, booked_date, estimate_session_duration, estimate_visitors_num, start_time_session, end_time_session, status } = req.body
-            const session = await pool.query(`INSERT INTO sessions (room_id, booked_date, estimate_session_duration, estimate_visitors_num, start_time_session, end_time_session, status) values ($1, $2, $3, $4, $5, $6, $7) RETURNING *`, [room_id, booked_date, estimate_session_duration, estimate_visitors_num, start_time_session, end_time_session, status])
+            // Создаем сессию
+            const session = await pool.query(`INSERT INTO sessions (booked_date, estimate_session_duration, estimate_visitors_num, status) values ($1, $2, $3, $4) RETURNING *`, [booked_date, estimate_session_duration, estimate_visitors_num, status])
 
-            // if(req.body.visitors){
-            //     for (let i = 0; i < visitors.length; i++) {
-            //         const element = array[i];
+            //Получаем данные визитеров сессии и добавляем в бд
+            for (let i = 0; i < req.body.visitors.length; i++) {
 
-            //     }
-            //     const visitors_sessions_durations
-            // }
+                // name, last_name, number_phone, deposit, deponent, tariff_id, status_visitor
+                const { tariff_id, name, status, last_name, number_phone, deposit, deponent } = req.body.visitors[i]
 
-            // for (let i = 0; i < req.body.visitors.length; i++) {
-            //     const { tariff_id, name, lastname, number_phone, deposit, deponent, status } = req.body.visitors[i]
-            //     await pool.query(`INSERT INTO visitors (session_id, tariff_id, name, lastname, number_phone, deposit, deponent, status) values ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`, [session.rows[0].id, tariff_id, name, lastname, number_phone, deposit, deponent, status])
-            // }
+                //Запрос на добавление визитера к сесси по id сессии
+                const visitor = await pool.query(`INSERT INTO visitors (session_id, tariff_id, name, status) values ($1, $2, $3, $4) RETURNING *`, [session.rows[0].id, tariff_id, name, status])
+
+                if (number_phone) {
+                    // Ищем клиента по номеру 
+                    const clientFound = await pool.query(`SELECT * FROM clients where number_phone = $1`, [number_phone])
+
+                    if (clientFound.rows[0]) {
+
+                        // Если клиент НАЙДЕН по номеру, то добавляем данному визитеру id клиента в поле client_id
+                        const visitors_updated = await pool.query(`UPDATE visitors SET client_id = ${clientFound.rows[0].id} WHERE id = ${visitor.rows[0].id} RETURNING *`)
+
+                        if (deposit) {
+                            // Если внесен депозит, то создаем депозит и вяжем к клиенту
+                            setDeposit(clientFound.rows[0], visitors_updated.rows[0], deposit)
+                        }
+
+                        if (deponent) {
+                            //Eсли внесен депонент, то создаем депонент и вяжем к клиенту
+                            setDeponent(clientFound.rows[0], visitors_updated.rows[0], deponent)
+                        }
+                    } else {
+                        // Если клиент НЕ найден по номеру, то создаем Client
+                        const client = await pool.query(`INSERT INTO clients (name, lastname, number_phone) values ($1, $2, $3) RETURNING *`, [name, last_name, number_phone])
+
+                        // Далее добавляем данному визитеру id данного клиента в поле client_id
+                        const visitors_updated = await pool.query(`UPDATE visitors SET client_id = ${client.rows[0].id} WHERE id = ${visitor.rows[0].id} RETURNING *`)
+
+                        if (deposit) {
+                            // Если внесен депозит, то создаем депозит и вяжем к клиенту
+                            setDeposit(client.rows[0], visitors_updated.rows[0], deposit)
+                        }
+                        if (deponent) {
+                            //Eсли внесен депонент, то создаем депонент и вяжем к клиенту
+                            setDeponent(client.rows[0], visitors_updated.rows[0], deponent)
+                        }
+                    }
+                } else {
+                    console.log("Номер телефона не введен");
+                }
+            }
+
+            async function setDeposit(client, visitor, deposit) {
+                // Создаем депозит по клиенту
+                const insert_deposit = await pool.query(`INSERT INTO deposits (visitor_id, paymet_type_id, client_id, value) values ($1, $2, $3, $4) RETURNING *`, [visitor.id, deposit.paymet_type_id, client.id, deposit.value])
+                return insert_deposit.rows[0]
+            }
+
+            async function setDeponent(client, visitor, deponent) {
+                // Создаем депонент по клиенту
+                const insert_deponent = await pool.query(`INSERT INTO deponents (visitor_id, client_id, value, status) values ($1, $2, $3, $4) RETURNING *`, [visitor.id, client.id, deponent.value, deponent.status])
+                return insert_deponent.rows[0]
+            }
 
             res.json([session.rows[0]])
+
         } catch (e) {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);
         }
@@ -57,21 +107,28 @@ export class sessionsController {
             futureDate.setUTCHours(0, 0, 0, 0)
             lastDate = lastDate.setDate(lastDate.getDate() - 2)
             futureDate = futureDate.setDate(futureDate.getDate() + Number(days) - 2)
-            let sessions = await pool.query(`SELECT * FROM sessions WHERE date BETWEEN '${new Date(lastDate).toISOString().split('T')[0]}' AND '${new Date(futureDate).toISOString().split('T')[0]}'`)
+            let sessions = await pool.query(`SELECT * FROM sessions WHERE booked_date BETWEEN '${new Date(lastDate).toISOString().split('T')[0]}' AND '${new Date(futureDate).toISOString().split('T')[0]}'`)
+
             for (let i = 0; i < sessions.rows.length; i++) {
-                const visitors = await pool.query(`SELECT * FROM visitors where session_id = $1`, [sessions.rows[i].id])
+                // Сначала берем сущность visitors_sessions_durations
+                const visitors_sessions_durations = await pool.query(`SELECT * FROM visitors_sessions_durations where session_id = $1`, [sessions.rows[i].id])
+                // После находим постителя по visitors_sessions_durations_id
+                const visitors = await pool.query(`SELECT * FROM visitors where visitor_session_duration_id = $1`, [visitors_sessions_durations.rows[0].id])
+
                 // const timeBooking = Number(sessions.rows[i].time_booking.slice(0, 2)) * 60 + Number(sessions.rows[i].time_booking.slice(-2))
+
                 const timeBooking = new Date(sessions.rows[i].date).getHours() * 60 + new Date(sessions.rows[i].date).getMinutes()
                 sessions.rows[i].time_booking = timeBooking
                 sessions.rows[i].visitors = visitors.rows
             }
+
             for (let i = -2; i < days - 2; i++) {
                 let date = new Date()
                 date.setUTCHours(0, 0, 0, 0)
                 date = date.setDate(date.getDate() + i)
                 for (let j = 0; j < sessions.rows.length; j++) {
                     const session = sessions.rows[j];
-                    if (new Date(session.date).toLocaleDateString() === new Date(date).toLocaleDateString()) {
+                    if (new Date(session.booked_date).toLocaleDateString() === new Date(date).toLocaleDateString()) {
                         session.index_day = i + 2
                     }
                 }
