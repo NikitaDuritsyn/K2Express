@@ -4,50 +4,40 @@ export class sessionsController {
     async createSession(req, res) {
         try {
             //Получаем данные сесии из запроса
-            const { booked_date, estimate_session_duration, estimate_visitors_num, status } = req.body
-
+            const { booked_date, estimate_session_duration, estimate_visitors_num } = req.body
             // Создаем сессию
-            const session = await pool.query(`INSERT INTO sessions (booked_date, estimate_session_duration, estimate_visitors_num, status) values ($1, $2, $3, $4) RETURNING *`, [booked_date, estimate_session_duration, estimate_visitors_num, status])
-
+            const session = await pool.query(`INSERT INTO sessions (booked_date, estimate_session_duration, estimate_visitors_num, status) values ($1, $2, $3, $4) RETURNING *`, [booked_date, estimate_session_duration, estimate_visitors_num, 'booked'])
             //Получаем данные визитеров сессии и добавляем в бд
             for (let i = 0; i < req.body.visitors.length; i++) {
-
-                // name, last_name, number_phone, deposit, deponent, tariff_id, status_visitor
-                const { tariff_id, name, status, last_name, number_phone, deposit, deponent } = req.body.visitors[i]
-
+                // Получаем данные визитера из запроса
+                const { tariff_id, name, last_name, number_phone, deposit, deponent } = req.body.visitors[i]
                 //Запрос на добавление визитера к сесси по id сессии
-                const visitor = await pool.query(`INSERT INTO visitors (session_id, tariff_id, name, status) values ($1, $2, $3, $4) RETURNING *`, [session.rows[0].id, tariff_id, name, status])
-
+                const visitor = await pool.query(`INSERT INTO visitors (session_id, tariff_id, name, status) values ($1, $2, $3, $4) RETURNING *`, [session.rows[0].id, tariff_id, name, 'booked'])
                 if (number_phone) {
                     // Ищем клиента по номеру 
                     const clientFound = await pool.query(`SELECT * FROM clients where number_phone = $1`, [number_phone])
 
                     if (clientFound.rows[0]) {
-
                         // Если клиент НАЙДЕН по номеру, то добавляем данному визитеру id клиента в поле client_id
                         const visitors_updated = await pool.query(`UPDATE visitors SET client_id = ${clientFound.rows[0].id} WHERE id = ${visitor.rows[0].id} RETURNING *`)
-
-                        if (deposit) {
+                        if (deposit?.value) {
                             // Если внесен депозит, то создаем депозит и вяжем к клиенту
                             setDeposit(clientFound.rows[0], visitors_updated.rows[0], deposit)
                         }
-
-                        if (deponent) {
+                        if (deponent?.value) {
                             //Eсли внесен депонент, то создаем депонент и вяжем к клиенту
                             setDeponent(clientFound.rows[0], visitors_updated.rows[0], deponent)
                         }
                     } else {
                         // Если клиент НЕ найден по номеру, то создаем Client
                         const client = await pool.query(`INSERT INTO clients (name, lastname, number_phone) values ($1, $2, $3) RETURNING *`, [name, last_name, number_phone])
-
                         // Далее добавляем данному визитеру id данного клиента в поле client_id
                         const visitors_updated = await pool.query(`UPDATE visitors SET client_id = ${client.rows[0].id} WHERE id = ${visitor.rows[0].id} RETURNING *`)
-
-                        if (deposit) {
+                        if (deposit?.value) {
                             // Если внесен депозит, то создаем депозит и вяжем к клиенту
                             setDeposit(client.rows[0], visitors_updated.rows[0], deposit)
                         }
-                        if (deponent) {
+                        if (deponent?.value) {
                             //Eсли внесен депонент, то создаем депонент и вяжем к клиенту
                             setDeponent(client.rows[0], visitors_updated.rows[0], deponent)
                         }
@@ -56,24 +46,20 @@ export class sessionsController {
                     console.log("Номер телефона не введен");
                 }
             }
-
             for (let i = 0; i < req.body.rooms.length; i++) {
                 // Вносим в бд комнаты сессии по id сессиии
-                await pool.query(`INSERT INTO sessions_rooms ( room_id, session_id ) values ($1, $2) RETURNING *`, [req.body.rooms[i].id, session.rows[0].id])
+                await pool.query(`INSERT INTO sessions_rooms ( room_id, session_id ) values ($1, $2) RETURNING *`, [req.body.rooms[i], session.rows[0].id])
             }
-
             async function setDeposit(client, visitor, deposit) {
                 // Создаем депозит по клиенту
                 const insert_deposit = await pool.query(`INSERT INTO deposits (visitor_id, paymet_type_id, client_id, value) values ($1, $2, $3, $4) RETURNING *`, [visitor.id, deposit.paymet_type_id, client.id, deposit.value])
                 return insert_deposit.rows[0]
             }
-
             async function setDeponent(client, visitor, deponent) {
                 // Создаем депонент по клиенту
-                const insert_deponent = await pool.query(`INSERT INTO deponents (visitor_id, client_id, value, status) values ($1, $2, $3, $4) RETURNING *`, [visitor.id, client.id, deponent.value, deponent.status])
+                const insert_deponent = await pool.query(`INSERT INTO deponents (visitor_id, client_id, value, status) values ($1, $2, $3, $4) RETURNING *`, [visitor.id, client.id, deponent.value, 'active'])
                 return insert_deponent.rows[0]
             }
-
             res.json([session.rows[0]])
 
         } catch (e) {
@@ -145,9 +131,18 @@ export class sessionsController {
     async deleteSession(req, res) {
         try {
             const sessionId = req.params.id
-            const visitors = await pool.query(`DELETE FROM visitors where session_id = $1`, [sessionId]);
-            const session = await pool.query(`DELETE FROM sessions where id = $1`, [sessionId]);
-            res.json(session.rows[0]).status(200)
+            // DELETE FROM visitors WHERE session_id IN(SELECT sessionId FROM sessions);
+            // DELETE FROM sessions;
+            const sessionVisitors = await pool.query(`SELECT * FROM visitors where session_id = $1`, [sessionId])
+            for (let i = 0; i < sessionVisitors.rows.length; i++) {
+                const visitor_id = sessionVisitors.rows[i].id;
+                await pool.query(`DELETE FROM deposits where visitor_id = $1`, [visitor_id]);
+                await pool.query(`DELETE FROM deponents where visitor_id = $1`, [visitor_id]);
+            }
+            await pool.query(`DELETE FROM visitors where session_id = $1`, [sessionId]);
+            await pool.query(`DELETE FROM sessions_rooms where session_id = $1`, [sessionId]);
+            const session = await pool.query(`DELETE FROM sessions where id = $1 RETURNING *`, [sessionId]);
+            res.json(session.rows[0])
         } catch (e) {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);
         }
