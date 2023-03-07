@@ -16,7 +16,6 @@ export class sessionsController {
                 if (number_phone) {
                     // Ищем клиента по номеру 
                     const clientFound = await pool.query(`SELECT * FROM clients where number_phone = $1`, [number_phone])
-
                     if (clientFound.rows[0]) {
                         // Если клиент НАЙДЕН по номеру, то добавляем данному визитеру id клиента в поле client_id
                         const visitors_updated = await pool.query(`UPDATE visitors SET client_id = ${clientFound.rows[0].id} WHERE id = ${visitor.rows[0].id} RETURNING *`)
@@ -61,11 +60,11 @@ export class sessionsController {
                 return insert_deponent.rows[0]
             }
             res.json([session.rows[0]])
-
         } catch (e) {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);
         }
     }
+
     async getSession(req, res) {
         try {
             const session_id = req.params.id
@@ -75,6 +74,7 @@ export class sessionsController {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);
         }
     }
+
     async getAllSessions(req, res) {
         try {
             let sessions = await pool.query(`SELECT * FROM sessions`)
@@ -93,24 +93,18 @@ export class sessionsController {
             futureDate.setUTCHours(0, 0, 0, 0)
             lastDate = lastDate.setDate(lastDate.getDate() - 2)
             futureDate = futureDate.setDate(futureDate.getDate() + Number(days) - 2)
-
             // Находим сессии в данном деапозоне дат
             let sessions = await pool.query(`SELECT * FROM sessions WHERE booked_date BETWEEN '${new Date(lastDate).toISOString().split('T')[0]}' AND '${new Date(futureDate).toISOString().split('T')[0]}'`)
-
             for (let i = 0; i < sessions.rows.length; i++) {
-
                 // Ищем пользователей по id сессии
                 const visitors = await pool.query(`SELECT * FROM visitors where session_id = $1`, [sessions.rows[i].id])
                 const session_rooms = await pool.query(`SELECT * FROM sessions_rooms where session_id = $1`, [sessions.rows[i].id])
-
                 // const timeBooking = Number(sessions.rows[i].time_booking.slice(0, 2)) * 60 + Number(sessions.rows[i].time_booking.slice(-2))
                 const timeBooking = new Date(sessions.rows[i].date).getHours() * 60 + new Date(sessions.rows[i].date).getMinutes()
-
                 sessions.rows[i].time_booking = timeBooking
                 sessions.rows[i].visitors = visitors.rows
                 sessions.rows[i].session_rooms = session_rooms.rows
             }
-
             // Добавляем поле index_day в соответствии с датой бронирования
             for (let i = -2; i < days - 2; i++) {
                 let date = new Date()
@@ -128,11 +122,10 @@ export class sessionsController {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);
         }
     }
+
     async deleteSession(req, res) {
         try {
             const sessionId = req.params.id
-            // DELETE FROM visitors WHERE session_id IN(SELECT sessionId FROM sessions);
-            // DELETE FROM sessions;
             const sessionVisitors = await pool.query(`SELECT * FROM visitors where session_id = $1`, [sessionId])
             for (let i = 0; i < sessionVisitors.rows.length; i++) {
                 const visitor_id = sessionVisitors.rows[i].id;
