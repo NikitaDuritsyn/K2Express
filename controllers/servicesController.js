@@ -27,4 +27,13 @@ export class servicesController {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);
         }
     }
+    async getServiceById(req, res) {
+        try {
+            const serviceId = req.params.id
+            const service = await pool.query(`SELECT * FROM services where id = $1`, [serviceId])
+            res.json(service.rows[0])
+        } catch (e) {
+            console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);
+        }
+    }
 }
