@@ -4,13 +4,13 @@ export class sessionsController {
     async createSession(req, res) {
         try {
             //Получаем данные сесии из запроса
-            const { booked_date, estimate_session_duration, estimate_visitors_num } = req.body
+            const { booked_date, estimate_session_duration, estimate_visitors_num, tariff_id } = req.body
             // Создаем сессию
-            const session = await pool.query(`INSERT INTO sessions (booked_date, estimate_session_duration, estimate_visitors_num, status) values ($1, $2, $3, $4) RETURNING *`, [booked_date, estimate_session_duration, estimate_visitors_num, 'booked'])
+            const session = await pool.query(`INSERT INTO sessions (booked_date, estimate_session_duration, estimate_visitors_num, status, tariff_id) values ($1, $2, $3, $4, $5) RETURNING *`, [booked_date, estimate_session_duration, estimate_visitors_num, 'booked', tariff_id])
             //Получаем данные визитеров сессии и добавляем в бд
             for (let i = 0; i < req.body.visitors.length; i++) {
                 // Получаем данные визитера из запроса
-                const { tariff_id, name, last_name, number_phone, deposit, deponent } = req.body.visitors[i]
+                const { name, last_name, number_phone, deposit, deponent } = req.body.visitors[i]
                 //Запрос на добавление визитера к сесси по id сессии
                 const visitor = await pool.query(`INSERT INTO visitors (session_id, tariff_id, name, status) values ($1, $2, $3, $4) RETURNING *`, [session.rows[0].id, tariff_id, name, 'booked'])
                 if (number_phone) {
@@ -126,16 +126,14 @@ export class sessionsController {
     async deleteSession(req, res) {
         try {
             const sessionId = req.params.id
-            const sessionVisitors = await pool.query(`SELECT * FROM visitors where session_id = $1`, [sessionId])
-            for (let i = 0; i < sessionVisitors.rows.length; i++) {
-                const visitor_id = sessionVisitors.rows[i].id;
-                await pool.query(`DELETE FROM deposits where visitor_id = $1`, [visitor_id]);
-                await pool.query(`DELETE FROM deponents where visitor_id = $1`, [visitor_id]);
-            }
+            await pool.query(`DELETE FROM visitors_services WHERE visitor_id IN (SELECT id FROM visitors where session_id = ${sessionId});`)
+            await pool.query(`DELETE FROM deposits WHERE visitor_id IN (SELECT id FROM visitors where session_id = ${sessionId});`)
+            await pool.query(`DELETE FROM deponents WHERE visitor_id IN (SELECT id FROM visitors where session_id = ${sessionId});`)
             await pool.query(`DELETE FROM visitors where session_id = $1`, [sessionId]);
             await pool.query(`DELETE FROM sessions_rooms where session_id = $1`, [sessionId]);
             const session = await pool.query(`DELETE FROM sessions where id = $1 RETURNING *`, [sessionId]);
             res.json(session.rows[0])
+
         } catch (e) {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);
         }
