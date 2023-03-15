@@ -12,6 +12,7 @@ import * as servicesRoutes from './routes/servicesRoutes.js'
 import * as sessionsRoutes from './routes/sessionsRoutes.js'
 import * as tariffsRoutes from './routes/tariffsRoutes.js'
 import * as clientRoutes from './routes/clientRoutes.js'
+import * as sessionsVisitorsStartTimeEndTimeRoutes from './routes/sessionsVisitorsStartTimeEndTimeRoutes.js'
 
 dotenv.config()
 const PORT = process.env.PORT || 3000
@@ -33,6 +34,7 @@ const servicesR = servicesRoutes.router
 const sessionsR = sessionsRoutes.router
 const tariffsR = tariffsRoutes.router
 const clientR = clientRoutes.router
+const sessionsVisitorsStartTimeEndTimeR = sessionsVisitorsStartTimeEndTimeRoutes.router
 
 app.use('/api', visitorsR)
 app.use('/api', visitorsServicesR)
@@ -45,6 +47,7 @@ app.use('/api', servicesR)
 app.use('/api', sessionsR)
 app.use('/api', tariffsR)
 app.use('/api', clientR)
+app.use('/api', sessionsVisitorsStartTimeEndTimeR)
 
 const start = async () => {
     try {

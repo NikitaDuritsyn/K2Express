@@ -64,7 +64,6 @@ export class sessionsController {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);
         }
     }
-
     async getSession(req, res) {
         try {
             const session_id = req.params.id
@@ -74,7 +73,6 @@ export class sessionsController {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);
         }
     }
-
     async getAllSessions(req, res) {
         try {
             let sessions = await pool.query(`SELECT * FROM sessions`)
@@ -83,7 +81,6 @@ export class sessionsController {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);
         }
     }
-
     async getAllSessionsByDaysForChart(req, res) {
         try {
             const days = req.params.days || 10
@@ -122,7 +119,6 @@ export class sessionsController {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);
         }
     }
-
     async deleteSession(req, res) {
         try {
             const sessionId = req.params.id
@@ -134,6 +130,23 @@ export class sessionsController {
             const session = await pool.query(`DELETE FROM sessions where id = $1 RETURNING *`, [sessionId]);
             res.json(session.rows[0])
 
+        } catch (e) {
+            console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);
+        }
+    }
+    async updateSession(req, res) {
+        try {
+            const sessionId = req.params.id
+            const updateData = req.body.updateData
+            for (const key in updateData) {
+                if (updateData.hasOwnProperty.call(updateData, key)) {
+                    const value = updateData[key];
+                    if (value && key != 'id') {
+                        await pool.query(`UPDATE session SET ${key} = '${value}' WHERE id = ${sessionId}`)
+                    }
+                }
+            }
+            res.json()
         } catch (e) {
             console.log('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack);
         }

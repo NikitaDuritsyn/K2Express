@@ -51,10 +51,13 @@ export class visitorsController {
         try {
             const updateData = req.body.updateData
             const visitorsId = req.body.visitorsId
+            // const sessionId = req.body.sessionId
+
             for (const key in updateData) {
                 if (updateData.hasOwnProperty.call(updateData, key)) {
                     const value = updateData[key];
                     if (value && key != 'id') {
+                        // if(){}
                         await pool.query(`UPDATE visitors SET ${key} = '${value}' WHERE id IN (${visitorsId})`)
                     }
                 }
