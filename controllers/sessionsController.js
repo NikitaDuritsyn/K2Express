@@ -51,12 +51,12 @@ export class sessionsController {
             }
             async function setDeposit(client, visitor, deposit) {
                 // Создаем депозит по клиенту
-                const insert_deposit = await pool.query(`INSERT INTO deposits (visitor_id, paymet_type_id, client_id, value) values ($1, $2, $3, $4) RETURNING *`, [visitor.id, deposit.paymet_type_id, client.id, deposit.value])
+                const insert_deposit = await pool.query(`INSERT INTO deposits (visitor_id, paymet_type_id, client_id, deposit_value) values ($1, $2, $3, $4) RETURNING *`, [visitor.id, deposit.paymet_type_id, client.id, deposit.value])
                 return insert_deposit.rows[0]
             }
             async function setDeponent(client, visitor, deponent) {
                 // Создаем депонент по клиенту
-                const insert_deponent = await pool.query(`INSERT INTO deponents (visitor_id, client_id, value, status) values ($1, $2, $3, $4) RETURNING *`, [visitor.id, client.id, deponent.value, 'active'])
+                const insert_deponent = await pool.query(`INSERT INTO deponents (visitor_id, client_id, deponent_value, status) values ($1, $2, $3, $4) RETURNING *`, [visitor.id, client.id, deponent.value, 'active'])
                 return insert_deponent.rows[0]
             }
             res.json([session.rows[0]])
