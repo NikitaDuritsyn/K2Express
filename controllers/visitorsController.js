@@ -55,7 +55,7 @@ export class visitorsController {
                 LEFT JOIN deponents ON deponents.client_id = clients.id 
                 WHERE visitors.session_id = ${sessionId};`
             )
-
+            visitorsList.rows.sort((a, b) => a.id > b.id ? 1 : -1);
             res.json(visitorsList.rows)
         } catch (e) {
             res.json('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack)

@@ -11,7 +11,7 @@ export class sessionVisitorsStartEndTimeController {
                 const visitorDeposit = await pool.query(`SELECT deposit_value FROM deposits WHERE visitor_id = ${visitorId}`)
                 if (visitorDeponent.rows[0]) {
                     const newDeposit = ((visitorDeposit.rows[0]) ? visitorDeposit.rows[0].deposit_value : 0) + visitorDeponent.rows[0].deponent_value
-                    // console.log('depositVisit:', ((visitorDeposit.rows[0]) ? visitorDeposit.rows[0].deposit_value : 0), '+', 'deponentVisit:', visitorDeponent.rows[0].deponent_value, '=', 'newDeposit', newDeposit);
+                    console.log('depositVisit:', ((visitorDeposit.rows[0]) ? visitorDeposit.rows[0].deposit_value : 0), '+', 'deponentVisit:', visitorDeponent.rows[0].deponent_value, '=', 'newDeposit', newDeposit);
                     await pool.query(`UPDATE deposits SET deposit_value = '${newDeposit}' WHERE visitor_id = $1`, [visitorId])
                     await pool.query(`UPDATE deponents SET status = 'disactive' WHERE visitor_id = $1`, [visitorId])
                 }
