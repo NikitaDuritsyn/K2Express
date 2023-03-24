@@ -38,21 +38,15 @@ export class visitorsController {
             res.json('Ошибка ' + e.name + ":\n " + e.message + "\n\n" + e.stack)
         }
     }
-    async getAllVisitorsSession(req, res) {
+    async getAllVisitorsBySession(req, res) {
         try {
             const sessionId = req.params.id
-            // const visitors = await pool.query(`SELECT * FROM visitors where session_id = $1`, [sessionId])
-
             const visitorsList = await pool.query(
                 `SELECT 
                 visitors.id, visitors.session_id, visitors.tariff_id, visitors.client_id, visitors.start_time_visitor, visitors.end_time_visitor, visitors.name, visitors.status, 
-                clients.number_phone,
-                deposits.deposit_value, 
-                deponents.deponent_value 
+                clients.number_phone
                 FROM visitors 
                 LEFT JOIN clients ON visitors.client_id = clients.id 
-                LEFT JOIN deposits ON deposits.client_id = clients.id 
-                LEFT JOIN deponents ON deponents.client_id = clients.id 
                 WHERE visitors.session_id = ${sessionId};`
             )
             visitorsList.rows.sort((a, b) => a.id > b.id ? 1 : -1);
@@ -72,7 +66,7 @@ export class visitorsController {
                     const value = updateData[key];
                     if (value && key != 'id') {
                         // if(){}
-                        await pool.query(`UPDATE visitors SET ${key} = '${value}' WHERE id IN (${visitorsId})`)
+                        await pool.query(`UPDATE visitors SET ${key} = '${value}' WHERE id IN(${visitorsId})`)
                     }
                 }
             }
